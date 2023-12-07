@@ -5,6 +5,7 @@ A Tiny Programming Language
 - Mike Brueggman
 - Alexander Diaz
 - Gavin Wieckowski
+- Jacob Shepard
 
 ## Project Requirements
 
@@ -62,7 +63,7 @@ Implement a semantical analysis phase that checks if variables have been declare
 Implement an execution engine that takes an analyzed ADT of your language and executes it. You find some example code in PL_F23_Executing_231116.zip. The execution engine should be able to execute small example programs such as the one given earlier.
 
 ### (5) Command Line Interface
-Write a tiny command line tool (use your languages name) that takes a file in your language and executes it. Optionally, add flags to run only certain phases of the translation process (tokenize, parse, analyze).
+Write a tiny command line tool (use your language's name) that takes a file in your language and executes it. Optionally, add flags to run only certain phases of the translation process (tokenize, parse, analyze).
 
 ```bash
 > tpl -te hello.tpl

@@ -1,11 +1,12 @@
 #![allow(non_snake_case)]
+#![allow(unused_imports)]
 
 use std::{error::Error, fs::read_to_string, path::PathBuf, rc::Rc};
 
 use clap::{ArgGroup, Parser};
 
 use crate::machine::Machine;
-use crate::tree::{AssignNode, BlockNode, ExprNode, FuncNode, LetNode, Parameter, PrintNode, ProgramNode, ReturnNode, StmtNode};
+use crate::tree::{AssignNode, BlockNode, ExprNode, FuncNode, LetNode, Parameter, PrintNode, ProgramNode, ReturnNode, StmtNode, WhileNode};
 use crate::value::Value;
 
 mod tree;
@@ -34,6 +35,11 @@ func main(argc) [
     print sum;
     sum = add(sum, 1);
     print sum;
+    print "While loop" + 50;
+    while sum < 20 [
+        sum = add(sum, 1);
+        print sum;
+    ]
 ]
 
 
@@ -98,11 +104,41 @@ fn grow_ast_program0() -> Rc<ProgramNode> {
         ));
     let stmtMain5 = StmtNode::Print(
         PrintNode::new(ExprNode::Var("sum".to_string())));
+
+    // block for while loop
+    let mut whileBlock = BlockNode::new();
+    let stmtWhile1 = StmtNode::Assign(
+        AssignNode::new(
+            "sum".to_string(),
+            ExprNode::Call(
+                "add".to_string(), vec![
+                    Rc::new(ExprNode::Var("sum".to_string())),
+                    Rc::new(ExprNode::Val(Value::I32(1))),
+                ]),
+        ));
+    let stmtWhile2 = StmtNode::Print(
+        PrintNode::new(ExprNode::Var("sum".to_string())));
+    whileBlock.statements.push(Rc::new(stmtWhile1));
+    whileBlock.statements.push(Rc::new(stmtWhile2));
+
+    // while loop statement
+    let stmtMain6 = StmtNode::While(WhileNode::new(
+        ExprNode::LessThan(
+            Rc::new(ExprNode::Var("sum".to_string())),
+            Rc::new(ExprNode::Val(Value::I32(20)))
+        ),
+        whileBlock
+    ));
+
+    // add statements to main block
     block_main.statements.push(Rc::new(stmtMain1));
     block_main.statements.push(Rc::new(stmtMain2));
     block_main.statements.push(Rc::new(stmtMain3));
     block_main.statements.push(Rc::new(stmtMain4));
     block_main.statements.push(Rc::new(stmtMain5));
+    // debug print statement
+    block_main.statements.push(Rc::new(StmtNode::Print(PrintNode::new(ExprNode::Add(Rc::new(ExprNode::String("While loop".to_string())), Rc::new(ExprNode::Val(Value::I32(50))))))));
+    block_main.statements.push(Rc::new(stmtMain6));
 
     let func_main = FuncNode::new(
         "main".to_string(),

@@ -136,8 +136,7 @@ impl Executor {
             }
             StmtNode::While(while_node) => {
                 println!("[debug] executing while statement");
-                // TODO: warning -- untested code. just putting this here so its not lost -alex
-                // think this is kinda how it would work?
+                // TODO: i tested this a little bit, should work, might wanna double check
                 while Evaluator::evaluate(while_node.condition.clone(), rc_locals.clone()) == Value::Bool(true) {
                     Self::execute_block(while_node.body.clone(), rc_locals.clone());
                 }

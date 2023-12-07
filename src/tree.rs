@@ -154,8 +154,11 @@ impl WhileNode {
 pub enum ExprNode {
     Var(String),
     Val(Value),
+    String(String),
     Add(Rc<ExprNode>, Rc<ExprNode>),
     Call(String, Vec<Rc<ExprNode>>),
+    LessThan(Rc<ExprNode>, Rc<ExprNode>),
+    // TODO: implement >, <=, >=, ==
 }
 
 impl ExprNode {}

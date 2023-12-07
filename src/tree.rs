@@ -28,12 +28,11 @@ pub struct FuncNode {
 }
 
 impl FuncNode {
-
     pub fn new(name: String, parameters: Vec<Parameter>, block_node: BlockNode) -> FuncNode {
         FuncNode {
             name,
             parameters,
-            block_node : Rc::new(block_node),
+            block_node: Rc::new(block_node),
         }
     }
 
@@ -76,6 +75,7 @@ pub enum StmtNode {
     Assign(AssignNode),
     Return(ReturnNode),
     Print(PrintNode),
+    While(WhileNode),
 }
 
 
@@ -110,19 +110,6 @@ impl AssignNode {
 }
 
 #[derive(Debug, Clone)]
-pub struct PrintNode {
-    pub expr: Rc<ExprNode>,
-}
-
-impl PrintNode {
-    pub fn new(expr: ExprNode) -> PrintNode {
-        PrintNode {
-            expr: Rc::new(expr),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct ReturnNode {
     pub expr: Rc<ExprNode>,
 }
@@ -136,6 +123,34 @@ impl ReturnNode {
 }
 
 #[derive(Debug, Clone)]
+pub struct PrintNode {
+    pub expr: Rc<ExprNode>,
+}
+
+impl PrintNode {
+    pub fn new(expr: ExprNode) -> PrintNode {
+        PrintNode {
+            expr: Rc::new(expr),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct WhileNode {
+    pub condition: Rc<ExprNode>,
+    pub body: Rc<BlockNode>,
+}
+
+impl WhileNode {
+    pub fn new(condition: ExprNode, body: BlockNode) -> WhileNode {
+        WhileNode {
+            condition: Rc::new(condition),
+            body: Rc::new(body),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum ExprNode {
     Var(String),
     Val(Value),
@@ -143,8 +158,4 @@ pub enum ExprNode {
     Call(String, Vec<Rc<ExprNode>>),
 }
 
-impl ExprNode {
-
-}
-
-
+impl ExprNode {}

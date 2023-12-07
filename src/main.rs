@@ -1,6 +1,9 @@
 #![allow(non_snake_case)]
 
-use std::rc::Rc;
+use std::{error::Error, fs::read_to_string, path::PathBuf, rc::Rc};
+
+use clap::{ArgGroup, Parser};
+
 use crate::machine::Machine;
 use crate::tree::{AssignNode, BlockNode, ExprNode, FuncNode, LetNode, Parameter, PrintNode, ProgramNode, ReturnNode, StmtNode};
 use crate::value::Value;
@@ -13,7 +16,6 @@ mod symbols;
 mod frame;
 mod value;
 mod evaluator;
-
 
 /*
 
@@ -36,12 +38,14 @@ func main(argc) [
 
 
  */
+
+// TODO: this will be replaced with our own AST generated. For testing.
 fn grow_ast_program0() -> Rc<ProgramNode> {
     let mut program = ProgramNode::new();
 
     // global variables
-    let let_count = LetNode::new( "count".to_string(), Value::Nil);
-    let let_help =  LetNode::new( "help".to_string(), Value::Nil);
+    let let_count = LetNode::new("count".to_string(), Value::Nil);
+    let let_help = LetNode::new("help".to_string(), Value::Nil);
     program.let_nodes.push(Rc::new(let_count));
     program.let_nodes.push(Rc::new(let_help));
 
@@ -74,21 +78,24 @@ fn grow_ast_program0() -> Rc<ProgramNode> {
     let stmtMain1 = StmtNode::Let(LetNode::new("sum".to_string(), Value::Nil));
     let stmtMain2 = StmtNode::Assign(
         AssignNode::new("sum".to_string(), ExprNode::Add(
-           Rc::new(ExprNode::Val(Value::I32(3))),
-           Rc::new(ExprNode::Add(
-               Rc::new(ExprNode::Val(Value::I32(5))),
-               Rc::new(ExprNode::Val(Value::I32(7))),
-           ))
+            Rc::new(ExprNode::Val(Value::I32(3))),
+            Rc::new(ExprNode::Add(
+                Rc::new(ExprNode::Val(Value::I32(5))),
+                Rc::new(ExprNode::Val(Value::I32(7))),
+            )),
         ))
     );
     let stmtMain3 = StmtNode::Print(
         PrintNode::new(ExprNode::Var("sum".to_string())));
-    let stmtMain4 = StmtNode::Assign(AssignNode::new("sum".to_string(),
-        ExprNode::Call("add".to_string(), vec![
-            Rc::new(ExprNode::Var("sum".to_string())),
-            Rc::new(ExprNode::Val(Value::I32(1)))
-        ])
-    ));
+    let stmtMain4 = StmtNode::Assign(
+        AssignNode::new(
+            "sum".to_string(),
+            ExprNode::Call(
+                "add".to_string(), vec![
+                    Rc::new(ExprNode::Var("sum".to_string())),
+                    Rc::new(ExprNode::Val(Value::I32(1))),
+                ]),
+        ));
     let stmtMain5 = StmtNode::Print(
         PrintNode::new(ExprNode::Var("sum".to_string())));
     block_main.statements.push(Rc::new(stmtMain1));
@@ -110,13 +117,49 @@ fn grow_ast_program0() -> Rc<ProgramNode> {
 
 
 fn run0() {
+    // this is the ast from the parser
+    // TODO: replace this with our parser
     let rc_program = grow_ast_program0();
 
+    // this is the machine that executes the ast
+    // it has the analyzer and the program executor
+    // TODO: should be pretty set, but will need to add some further logic later
     let runtime = Machine::new(rc_program);
     runtime.run();
 }
 
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
+    // TODO: uncomment when ready to add cli support
+    // let args = Cli::parse();
+    //
+    // if args.tokenize {
+    //     println!("Tokenizing file: {:?}", args.file);
+    // }
+    //
+    // if args.execute {
+    //     println!("Executing file: {:?}", args.file);
+    // }
+    //
+    // println!("File contents:\n{}", read_to_string(args.file)?);
+
     run0();
+
+    Ok(())
+}
+
+/// Tiny Programming Language Cli
+#[derive(Debug, Parser)]
+#[clap(group = ArgGroup::new("action").required(false).multiple(true))]
+struct Cli {
+    /// File to process
+    file: PathBuf,
+
+    /// Tokenize the file
+    #[clap(short = 't', long = "tokenize", group = "action")]
+    tokenize: bool,
+
+    /// Execute the file
+    #[clap(short = 'e', long = "execute", group = "action")]
+    execute: bool,
 }

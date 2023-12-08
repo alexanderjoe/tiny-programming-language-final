@@ -1,6 +1,17 @@
 func add(a,b) [
- let a;
- let b;
+    let c;
+
+    return c;
 ]
 
-func main(argc) []
+func main(argc) [
+    let d = true;
+
+    print d;
+
+    if d [
+        print "d is true";
+    ] else [
+        print "d is false";
+    ]
+]

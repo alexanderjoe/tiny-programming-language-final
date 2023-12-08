@@ -117,4 +117,39 @@ impl Token {
             _ => panic!("Expected ID token, found {:?}", self)
         }
     }
+
+    pub fn get_lit_i32(&self) -> i32 {
+        match self {
+            Token::LIT_INT32(val) => *val,
+            _ => panic!("Expected LIT_INT32 token, found {:?}", self)
+        }
+    }
+
+    pub fn get_lit_f32(&self) -> f32 {
+        match self {
+            Token::LIT_FLT32(val) => *val,
+            _ => panic!("Expected LIT_FLT32 token, found {:?}", self)
+        }
+    }
+
+    pub fn get_lit_char(&self) -> char {
+        match self {
+            Token::LIT_CHAR(val) => *val,
+            _ => panic!("Expected LIT_CHAR token, found {:?}", self)
+        }
+    }
+
+    pub fn get_lit_string(&self) -> String {
+        match self {
+            Token::LIT_STRING(val) => val.clone(),
+            _ => panic!("Expected LIT_STRING token, found {:?}", self)
+        }
+    }
+
+    pub fn get_lit_bool(&self) -> bool {
+        match self {
+            Token::LIT_BOOL(val) => *val,
+            _ => panic!("Expected LIT_BOOL token, found {:?}", self)
+        }
+    }
 }

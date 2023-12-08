@@ -180,18 +180,22 @@ impl DescentParser {
                     let let_node = self.parse_let();
                     block_node.statements.push(Rc::new(StmtNode::Let(let_node)));
                 }
-                // Token::KW_IF => {
-                //     let if_node = self.parse_if_then_else();
-                //     block_node.statements.push(Rc::new(StmtNode::IfElse(if_node)))
-                // }
-                // Token::KW_RETURN => {
-                //     let return_node = self.parse_return();
-                //     block_node.statements.push(Rc::new(StmtNode::Return(return_node)))
-                // }
-                // Token::KW_WHILE => {
-                //     let while_node = self.parse_while();
-                //     block_node.statements.push(Rc::new(StmtNode::While(while_node)))
-                // }
+                Token::KW_IF => {
+                    let if_node = self.parse_if_then_else();
+                    block_node.statements.push(Rc::new(StmtNode::IfElse(if_node)))
+                }
+                Token::KW_RETURN => {
+                    let return_node = self.parse_return();
+                    block_node.statements.push(Rc::new(StmtNode::Return(return_node)))
+                }
+                Token::KW_WHILE => {
+                    let while_node = self.parse_while();
+                    block_node.statements.push(Rc::new(StmtNode::While(while_node)))
+                }
+                Token::KW_PRINT => {
+                    let print_node = self.parse_print();
+                    block_node.statements.push(Rc::new(StmtNode::Print(print_node)))
+                }
                 _ => panic!("Unexpected token in block: '{:?}'", self.curr()),
             }
         }
@@ -225,16 +229,20 @@ impl DescentParser {
         //     let_node.push(let_type);
         // }
         // todo: add value assignment
-        // // optional assignment
-        // if self.accept(Token::OP_ASSIGN) {
-        //     let value_node = self.parse_value();
-        //     let_node.push(value_node);
-        // }
+        // optional assignment
+        let mut val_node = Value::Nil;
+        if self.accept(Token::OP_ASSIGN) {
+            let expr_node = self.parse_expr();
+            val_node = match expr_node {
+                ExprNode::Val(val) => val,
+                _ => panic!("Expected value but found '{:?}'", self.curr()),
+            };
+        }
 
         self.expect(Token::SEMICOLON);
 
         self.indent_decrement();
-        LetNode::new_no_value(let_name.get_id_name())
+        LetNode::new(let_name.get_id_name(), val_node)
     }
 
     /*
@@ -243,31 +251,25 @@ impl DescentParser {
     * bool = true | false
     * block_nest = '[' <block_list> ']'
     */
-    // fn parse_if_then_else(&mut self) -> IfElseNode {
-    //     self.indent_print("parse_if_then_else()");
-    //     self.indent_increment();
-    //     let mut if_node = ParseTree::new(Token::KW_IF);
-    //     {
-    //         self.expect(Token::KW_IF);
-    //
-    //         let condition_node = self.parse_value();
-    //         if_node.push(condition_node);
-    //
-    //         let then_node_block = self.parse_block_nest();
-    //         let mut then_node = ParseTree::new(Token::THEN_NODE);
-    //         then_node.push(then_node_block);
-    //         if_node.push(then_node);
-    //
-    //         if self.accept(Token::KW_ELSE) {
-    //             let else_node_block = self.parse_block_nest();
-    //             let mut else_node = ParseTree::new(Token::ELSE_NODE);
-    //             else_node.push(else_node_block);
-    //             if_node.push(else_node);
-    //         }
-    //     }
-    //     self.indent_decrement();
-    //     if_node
-    // }
+    fn parse_if_then_else(&mut self) -> IfElseNode {
+        self.indent_print("parse_if_then_else()");
+        self.indent_increment();
+
+        self.expect(Token::KW_IF);
+
+        let condition_expr = self.parse_expr();
+
+        let then_node_block = self.parse_block_nest();
+
+        // optional else block
+        let mut else_node_block: Option<BlockNode> = None;
+        if self.accept(Token::KW_ELSE) {
+            else_node_block = self.parse_block_nest().into();
+        }
+
+        self.indent_decrement();
+        IfElseNode::new(condition_expr, then_node_block, else_node_block)
+    }
 
     /*
     * EBNF
@@ -276,27 +278,41 @@ impl DescentParser {
     * identifier = ID(String)
     * literal = LIT_INT32(i32) | LIT_FLT32(f32) | LIT_CHAR(char) | LIT_STRING(String) | LIT_BOOL(bool)
     */
-    // fn parse_return(&mut self) -> ReturnNode {
-    //     self.indent_print("parse_return()");
-    //     self.indent_increment();
-    //     let mut return_node = ParseTree::new(Token::KW_RETURN);
-    //     {
-    //         self.expect(Token::KW_RETURN);
-    //         let value_node = self.parse_value();
-    //         return_node.push(value_node);
-    //         self.expect(Token::SEMICOLON);
-    //     }
-    //     self.indent_decrement();
-    //     ReturnNode::new()
-    // }
-    //
-    // fn parse_while(&mut self) -> WhileNode {
-    //     self.indent_print("parse_while()");
-    //     self.indent_increment();
-    //
-    //     self.expect(Token::KW_WHILE);
-    //     self.parse_value();
-    // }
+    fn parse_return(&mut self) -> ReturnNode {
+        self.indent_print("parse_return()");
+        self.indent_increment();
+
+        self.expect(Token::KW_RETURN);
+        let expr_node = self.parse_expr();
+        self.expect(Token::SEMICOLON);
+
+        self.indent_decrement();
+        ReturnNode::new(expr_node)
+    }
+
+    fn parse_while(&mut self) -> WhileNode {
+        self.indent_print("parse_while()");
+        self.indent_increment();
+
+        self.expect(Token::KW_WHILE);
+        let expr_node = self.parse_expr();
+        let block_node = self.parse_block_nest();
+
+        self.indent_decrement();
+        WhileNode::new(expr_node, block_node)
+    }
+
+    fn parse_print(&mut self) -> PrintNode {
+        self.indent_print("parse_print()");
+        self.indent_increment();
+
+        self.expect(Token::KW_PRINT);
+        let expr_node = self.parse_expr();
+        self.expect(Token::SEMICOLON);
+
+        self.indent_decrement();
+        PrintNode::new(expr_node)
+    }
 
     /*
     * EBNF
@@ -304,56 +320,43 @@ impl DescentParser {
     * identifier = ID(String)
     * literal = LIT_INT32(i32) | LIT_FLT32(f32) | LIT_CHAR(char) | LIT_STRING(String) | LIT_BOOL(bool)
     */
-    // fn parse_expr(&mut self) -> ExprNode {
-    //     self.indent_print("parse_expr()");
-    //     self.indent_increment();
-    //     let token = self.curr();
-    //     match token {
-    //         Token::id() => {
-    //             let identifier = self.expect(Token::id());
-    //             let mut expr_node = ParseTree::new(Token::id());
-    //             expr_node.push(ParseTree::new(identifier));
-    //             self.indent_decrement();
-    //             ExprNode::new(expr_node)
-    //         }
-    //         Token::lit_int32() => {
-    //             let literal = self.expect(Token::lit_int32());
-    //             let mut expr_node = ParseTree::new(Token::lit_int32());
-    //             expr_node.push(ParseTree::new(literal));
-    //             self.indent_decrement();
-    //             ExprNode::new(expr_node)
-    //         }
-    //         Token::lit_flt32() => {
-    //             let literal = self.expect(Token::lit_flt32());
-    //             let mut expr_node = ParseTree::new(Token::lit_flt32());
-    //             expr_node.push(ParseTree::new(literal));
-    //             self.indent_decrement();
-    //             ExprNode::new(expr_node)
-    //         }
-    //         Token::lit_char() => {
-    //             let literal = self.expect(Token::lit_char());
-    //             let mut expr_node = ParseTree::new(Token::lit_char());
-    //             expr_node.push(ParseTree::new(literal));
-    //             self.indent_decrement();
-    //             ExprNode::new(expr_node)
-    //         }
-    //         Token::lit_string() => {
-    //             let literal = self.expect(Token::lit_string());
-    //             let mut expr_node = ParseTree::new(Token::lit_string());
-    //             expr_node.push(ParseTree::new(literal));
-    //             self.indent_decrement();
-    //             ExprNode::new(expr_node)
-    //         }
-    //         Token::lit_bool() => {
-    //             let literal = self.expect(Token::lit_bool());
-    //             let mut expr_node = ParseTree::new(Token::lit_bool());
-    //             expr_node.push(ParseTree::new(literal));
-    //             self.indent_decrement();
-    //             ExprNode::new(expr_node)
-    //         }
-    //         _ => panic!("Expected value but found '{:?}'", self.curr()),
-    //     }
-    // }
+    //todo: this is very basic, just a temp as we have no pratt parser
+    fn parse_expr(&mut self) -> ExprNode {
+        self.indent_print("parse_expr()");
+        self.indent_increment();
+        let token = self.curr();
+
+        let expr_node = match token {
+            Token::ID(_) => {
+                let id_node = self.expect(Token::id());
+                ExprNode::Var(id_node.get_id_name())
+            }
+            Token::LIT_INT32(_) => {
+                let lit_node = self.expect(Token::lit_i32());
+                ExprNode::Val(Value::I32(lit_node.get_lit_i32()))
+            }
+            Token::LIT_FLT32(_) => {
+                let lit_node = self.expect(Token::lit_f32());
+                ExprNode::Val(Value::F32(lit_node.get_lit_f32()))
+            }
+            Token::LIT_CHAR(_) => {
+                let lit_node = self.expect(Token::lit_char());
+                ExprNode::Val(Value::Chars(lit_node.get_lit_char().to_string())) // todo: fix this
+            }
+            Token::LIT_STRING(_) => {
+                let lit_node = self.expect(Token::lit_string());
+                ExprNode::Val(Value::Chars(lit_node.get_lit_string()))
+            }
+            Token::LIT_BOOL(_) => {
+                let lit_node = self.expect(Token::lit_bool());
+                ExprNode::Val(Value::Bool(lit_node.get_lit_bool()))
+            }
+            _ => panic!("Expected value but found '{:?}'", self.curr()),
+        };
+
+        self.indent_decrement();
+        expr_node
+    }
 }
 
 // utility functions for lexer

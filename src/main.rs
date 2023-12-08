@@ -1,5 +1,6 @@
 #![allow(non_snake_case)]
 #![allow(unused_imports)]
+#![allow(dead_code)] // TODO: remove this
 
 use std::{error::Error, fs::read_to_string, path::PathBuf, rc::Rc};
 

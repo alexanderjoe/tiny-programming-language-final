@@ -7,6 +7,7 @@ use clap::{ArgGroup, Parser};
 use tree::IfElseNode;
 
 use crate::machine::Machine;
+use crate::parser::DescentParser;
 use crate::tree::{AssignNode, BlockNode, ExprNode, FuncNode, LetNode, Parameter, PrintNode, ProgramNode, ReturnNode, StmtNode, WhileNode};
 use crate::value::Value;
 
@@ -18,6 +19,12 @@ mod symbols;
 mod frame;
 mod value;
 mod evaluator;
+
+// added
+mod lexer;
+mod parser;
+mod token;
+mod parser_pratt;
 
 /*
 
@@ -217,10 +224,24 @@ fn run0() {
     runtime.run();
 }
 
+fn run_main(input: String) {
+    let mut lexer = lexer::Lexer::new("".to_string());
+    lexer.set_input(input);
+
+    let mut parser = DescentParser::new(lexer);
+    let ast = parser.analyze();
+
+    // print ast
+    println!("---------------------\nProgram AST:\n {:#?}\n---------------------", ast);
+
+    let runtime = Machine::new(Rc::new(ast));
+    runtime.run();
+}
+
 
 fn main() -> Result<(), Box<dyn Error>> {
     // TODO: uncomment when ready to add cli support
-    // let args = Cli::parse();
+    let args = Cli::parse();
     //
     // if args.tokenize {
     //     println!("Tokenizing file: {:?}", args.file);
@@ -232,23 +253,25 @@ fn main() -> Result<(), Box<dyn Error>> {
     //
     // println!("File contents:\n{}", read_to_string(args.file)?);
 
-    run0();
+    // run0();
+    let input = read_to_string(args.file).expect("Failed to read input file.");
+    run_main(input);
 
     Ok(())
 }
 
 /// Tiny Programming Language Cli
 #[derive(Debug, Parser)]
-#[clap(group = ArgGroup::new("action").required(false).multiple(true))]
+// #[clap(group = ArgGroup::new("action").required(false).multiple(true))]
 struct Cli {
     /// File to process
     file: PathBuf,
 
-    /// Tokenize the file
-    #[clap(short = 't', long = "tokenize", group = "action")]
-    tokenize: bool,
-
-    /// Execute the file
-    #[clap(short = 'e', long = "execute", group = "action")]
-    execute: bool,
+    // /// Tokenize the file
+    // #[clap(short = 't', long = "tokenize", group = "action")]
+    // tokenize: bool,
+    //
+    // /// Execute the file
+    // #[clap(short = 'e', long = "execute", group = "action")]
+    // execute: bool,
 }

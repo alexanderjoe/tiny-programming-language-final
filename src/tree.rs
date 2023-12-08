@@ -93,6 +93,13 @@ impl LetNode {
             value,
         }
     }
+
+    pub fn new_no_value(name: String) -> LetNode {
+        LetNode {
+            name,
+            value: Value::Nil,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

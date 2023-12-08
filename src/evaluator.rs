@@ -51,12 +51,31 @@ impl Evaluator {
                 let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
                 Value::Bool(value_a < value_b)
             }
+            ExprNode::GreaterThan(expr_a, expr_b) => {
+                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                Value::Bool(value_a > value_b)
+            }
             ExprNode::EqualTo(expr_a, expr_b ) => {
                 let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
                 let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
                 Value::Bool(value_a == value_b)
             }
-            // TODO: implement >, <=, >=
+            ExprNode::LessThanEq(expr_a, expr_b) => {
+                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                Value::Bool(value_a <= value_b)
+            }
+            ExprNode::GreaterThanEq(expr_a, expr_b) => {
+                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                Value::Bool(value_a >= value_b)
+            }
+            ExprNode::NotEqualTo(expr_a, expr_b) => {
+                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                Value::Bool(value_a != value_b)
+            }
         }
     }
 

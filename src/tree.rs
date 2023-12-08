@@ -179,8 +179,11 @@ pub enum ExprNode {
     Add(Rc<ExprNode>, Rc<ExprNode>),
     Call(String, Vec<Rc<ExprNode>>),
     LessThan(Rc<ExprNode>, Rc<ExprNode>),
+    GreaterThan(Rc<ExprNode>, Rc<ExprNode>),
     EqualTo(Rc<ExprNode>, Rc<ExprNode>),
-    // TODO: implement >, <=, >=
+    LessThanEq(Rc<ExprNode>, Rc<ExprNode>),
+    GreaterThanEq(Rc<ExprNode>, Rc<ExprNode>),
+    NotEqualTo(Rc<ExprNode>, Rc<ExprNode>),
 }
 
 impl ExprNode {}

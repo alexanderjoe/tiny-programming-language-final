@@ -76,6 +76,7 @@ pub enum StmtNode {
     Return(ReturnNode),
     Print(PrintNode),
     While(WhileNode),
+    IfElse(IfElseNode),
 }
 
 
@@ -149,7 +150,22 @@ impl WhileNode {
         }
     }
 }
+#[derive(Debug, Clone)]
+pub struct IfElseNode {
+    pub condition: Rc<ExprNode>,
+    pub ifBody: Rc<BlockNode>,
+    pub elseBody: Rc<BlockNode>,
+}
 
+impl IfElseNode {
+    pub fn new(condition: ExprNode, ifBody: BlockNode, elseBody: BlockNode) -> IfElseNode {
+        IfElseNode {
+            condition: Rc::new(condition),
+            ifBody: Rc::new(ifBody),
+            elseBody: Rc::new(elseBody),
+        }
+    }
+}
 #[derive(Debug, Clone)]
 pub enum ExprNode {
     Var(String),
@@ -158,7 +174,8 @@ pub enum ExprNode {
     Add(Rc<ExprNode>, Rc<ExprNode>),
     Call(String, Vec<Rc<ExprNode>>),
     LessThan(Rc<ExprNode>, Rc<ExprNode>),
-    // TODO: implement >, <=, >=, ==
+    EqualTo(Rc<ExprNode>, Rc<ExprNode>),
+    // TODO: implement >, <=, >=
 }
 
 impl ExprNode {}

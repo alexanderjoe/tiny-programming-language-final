@@ -51,7 +51,12 @@ impl Evaluator {
                 let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
                 Value::Bool(value_a < value_b)
             }
-            // TODO: implement >, <=, >=, ==
+            ExprNode::EqualTo(expr_a, expr_b ) => {
+                let value_a = Self::evaluate(expr_a.clone(), rc_frame.clone());
+                let value_b = Self::evaluate(expr_b.clone(), rc_frame.clone());
+                Value::Bool(value_a == value_b)
+            }
+            // TODO: implement >, <=, >=
         }
     }
 

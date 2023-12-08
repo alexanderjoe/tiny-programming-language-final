@@ -142,6 +142,18 @@ impl Executor {
                 }
                 (false, Value::Nil)
             }
+            StmtNode::IfElse(if_else_node) => {
+                println!("[debug] executing if else statement");
+                // TODO: pretty much copy-pasted from While, so it should work, but needs more testing
+                if Evaluator::evaluate(if_else_node.condition.clone(), rc_locals.clone()) == Value::Bool(true) {
+                    println!("[debug] executing if branch");
+                    Self::execute_block(if_else_node.ifBody.clone(), rc_locals.clone());
+                } else{
+                    println!("[debug] executing else branch");
+                    Self::execute_block(if_else_node.elseBody.clone(), rc_locals.clone());
+                }
+                (false, Value::Nil)
+            }
         }
 
     }

@@ -4,6 +4,7 @@
 use std::{error::Error, fs::read_to_string, path::PathBuf, rc::Rc};
 
 use clap::{ArgGroup, Parser};
+use tree::IfElseNode;
 
 use crate::machine::Machine;
 use crate::tree::{AssignNode, BlockNode, ExprNode, FuncNode, LetNode, Parameter, PrintNode, ProgramNode, ReturnNode, StmtNode, WhileNode};
@@ -38,6 +39,13 @@ func main(argc) [
     print "While loop" + 50;
     while sum < 20 [
         sum = add(sum, 1);
+        print sum;
+    ]
+    if sum == 20 [
+        sum = add(sum, 1);
+        print sum;
+    ] else [
+        sum = add(sum, 2);
         print sum;
     ]
 ]
@@ -130,6 +138,50 @@ fn grow_ast_program0() -> Rc<ProgramNode> {
         whileBlock
     ));
 
+    // block for if
+    let mut ifBlock = BlockNode::new();
+    let stmtIf1 = StmtNode::Assign(
+        AssignNode::new(
+            "sum".to_string(),
+            ExprNode::Call(
+                "add".to_string(), vec![
+                    Rc::new(ExprNode::Var("sum".to_string())),
+                    Rc::new(ExprNode::Val(Value::I32(1))),
+                ]),
+        )
+    );
+    let stmtIf2 = StmtNode::Print(
+        PrintNode::new(ExprNode::Var("sum".to_string())));
+    ifBlock.statements.push(Rc::new(stmtIf1));
+    ifBlock.statements.push(Rc::new(stmtIf2));
+
+    // block for else
+    let mut elseBlock = BlockNode::new();
+    let stmtElse1 = StmtNode::Assign(
+        AssignNode::new(
+            "sum".to_string(),
+            ExprNode::Call(
+                "add".to_string(), vec![
+                    Rc::new(ExprNode::Var("sum".to_string())),
+                    Rc::new(ExprNode::Val(Value::I32(2))),
+                ]),
+        )
+    );
+    let stmtElse2 = StmtNode::Print(
+        PrintNode::new(ExprNode::Var("sum".to_string())));
+    elseBlock.statements.push(Rc::new(stmtElse1));
+    elseBlock.statements.push(Rc::new(stmtElse2));
+
+    // if else statement
+    let stmtMain7 = StmtNode::IfElse(IfElseNode::new(
+        ExprNode::EqualTo(
+            Rc::new(ExprNode::Var("sum".to_string())),
+            Rc::new(ExprNode::Val(Value::I32(20)))
+        ),
+        ifBlock,
+        elseBlock,
+    ));
+
     // add statements to main block
     block_main.statements.push(Rc::new(stmtMain1));
     block_main.statements.push(Rc::new(stmtMain2));
@@ -139,6 +191,7 @@ fn grow_ast_program0() -> Rc<ProgramNode> {
     // debug print statement
     block_main.statements.push(Rc::new(StmtNode::Print(PrintNode::new(ExprNode::Add(Rc::new(ExprNode::String("While loop".to_string())), Rc::new(ExprNode::Val(Value::I32(50))))))));
     block_main.statements.push(Rc::new(stmtMain6));
+    block_main.statements.push(Rc::new(stmtMain7));
 
     let func_main = FuncNode::new(
         "main".to_string(),

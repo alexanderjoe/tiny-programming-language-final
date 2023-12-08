@@ -150,22 +150,27 @@ impl WhileNode {
         }
     }
 }
+
 #[derive(Debug, Clone)]
 pub struct IfElseNode {
     pub condition: Rc<ExprNode>,
     pub ifBody: Rc<BlockNode>,
-    pub elseBody: Rc<BlockNode>,
+    pub elseBody: Option<Rc<BlockNode>>,
 }
 
 impl IfElseNode {
-    pub fn new(condition: ExprNode, ifBody: BlockNode, elseBody: BlockNode) -> IfElseNode {
+    pub fn new(condition: ExprNode, ifBody: BlockNode, elseBody: Option<BlockNode>) -> IfElseNode {
         IfElseNode {
             condition: Rc::new(condition),
             ifBody: Rc::new(ifBody),
-            elseBody: Rc::new(elseBody),
+            elseBody: match elseBody {
+                Some(block) => Some(Rc::new(block)),
+                None => None,
+            },
         }
     }
 }
+
 #[derive(Debug, Clone)]
 pub enum ExprNode {
     Var(String),

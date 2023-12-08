@@ -179,7 +179,7 @@ fn grow_ast_program0() -> Rc<ProgramNode> {
             Rc::new(ExprNode::Val(Value::I32(20)))
         ),
         ifBlock,
-        elseBlock,
+        elseBlock.into()
     ));
 
     // add statements to main block

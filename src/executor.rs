@@ -11,7 +11,6 @@ pub struct Executor {
 }
 
 impl Executor {
-
     pub fn new(program: Rc<ProgramNode>) -> Executor {
         Executor { program }
     }
@@ -51,7 +50,7 @@ impl Executor {
     pub fn execute_function(
         rc_func: Rc<FuncNode>,
         frame: Rc<RefCell<Frame>>,
-        arguments: Vec<Value>
+        arguments: Vec<Value>,
     ) -> Value
     {
         let name = &rc_func.name;
@@ -145,17 +144,18 @@ impl Executor {
             StmtNode::IfElse(if_else_node) => {
                 println!("[debug] executing if else statement");
                 // TODO: pretty much copy-pasted from While, so it should work, but needs more testing
-                if Evaluator::evaluate(if_else_node.condition.clone(), rc_locals.clone()) == Value::Bool(true) {
+                let condition = Evaluator::evaluate(if_else_node.condition.clone(), rc_locals.clone()) == Value::Bool(true);
+                if condition {
                     println!("[debug] executing if branch");
                     Self::execute_block(if_else_node.ifBody.clone(), rc_locals.clone());
-                } else{
-                    println!("[debug] executing else branch");
-                    Self::execute_block(if_else_node.elseBody.clone(), rc_locals.clone());
                 }
+                if !condition && if_else_node.elseBody.is_some() {
+                    println!("[debug] executing else branch");
+                    Self::execute_block(if_else_node.elseBody.clone().unwrap(), rc_locals.clone());
+                }
+
                 (false, Value::Nil)
             }
         }
-
     }
-
 }

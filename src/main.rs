@@ -183,10 +183,11 @@ fn grow_ast_program0() -> Rc<ProgramNode> {
     let stmtMain7 = StmtNode::IfElse(IfElseNode::new(
         ExprNode::EqualTo(
             Rc::new(ExprNode::Var("sum".to_string())),
-            Rc::new(ExprNode::Val(Value::I32(20)))
+            Rc::new(ExprNode::Val(Value::I32(21)))
         ),
         ifBlock,
-        elseBlock.into()
+        None,
+        //elseBlock.into()
     ));
 
     // add statements to main block

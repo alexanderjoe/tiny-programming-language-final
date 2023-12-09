@@ -5,13 +5,26 @@ func add(a,b) [
 ]
 
 func main(argc) [
-    let d = true;
-
-    print d;
-
-    if d [
-        print "d is true";
-    ] else [
-        print "d is false";
+    let x;
+    x = 5 + 4 + 2;
+    while x < 25 [
+        x = x + 1;
+        print "so true: " + x;
     ]
+
+    let z;
+
+   z = 5.0 + 4.2;
+   print z;
+
+   while z <= 10.1 [
+        z = z + 0.1;
+        print z + " has grown!";
+   ]
+
+   if z > 11.1 [
+    print "big";
+   ] else [
+    print "not so tough after all";
+   ]
 ]

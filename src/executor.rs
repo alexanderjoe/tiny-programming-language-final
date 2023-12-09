@@ -3,6 +3,7 @@ use std::ops::Deref;
 use std::rc::Rc;
 use crate::evaluator::Evaluator;
 use crate::frame::Frame;
+use crate::logger::Logger;
 use crate::tree::{BlockNode, FuncNode, ProgramNode, StmtNode};
 use crate::value::Value;
 
@@ -16,12 +17,12 @@ impl Executor {
     }
 
     pub fn execute(&self) {
-        println!("[info] Execute.");
+        Logger::info("Execute.");
         self.execute_program();
     }
 
     fn execute_program(&self) {
-        println!("[info] Execute Program.");
+        Logger::info("Execute Program.");
 
         // get program node symbol table
         let rc_symbols = self.program.symbols.clone();
@@ -54,7 +55,7 @@ impl Executor {
     ) -> Value
     {
         let name = &rc_func.name;
-        println!("[debug] calling function '{name}'.");
+        Logger::debug(&format!("calling function '{name}'.", name = name));
 
         // create local stack frame
         let mut locals = Frame::new(Some(frame));
@@ -88,7 +89,7 @@ impl Executor {
         // initialize local frame
         rc_locals.borrow_mut().init_symbols(&symbols);
 
-        println!("[debug] Block Symbols:");
+        Logger::debug("Block Symbols:");
         rc_locals.borrow_mut().print();
 
         // execute statements
@@ -112,29 +113,29 @@ impl Executor {
     {
         match rc_statement.deref() {
             StmtNode::Let(_) => {
-                println!("[debug] ignoring let statement");
+                Logger::debug("ignoring let statement");
                 (false, Value::Nil)
             }
             StmtNode::Assign(assign) => {
-                println!("[debug] executing assign statement");
+                Logger::debug("executing assign statement");
                 let name = &assign.name;
                 let value = Evaluator::evaluate(assign.expr.clone(), rc_locals.clone());
                 rc_locals.borrow_mut().assign(name, value);
                 (false, Value::Nil)
             }
             StmtNode::Return(ret) => {
-                println!("[debug] executing return statement");
+                Logger::debug("executing return statement");
                 let value = Evaluator::evaluate(ret.expr.clone(), rc_locals.clone());
                 (true, value)
             }
             StmtNode::Print(print) => {
-                println!("[debug] executing print statement");
+                Logger::debug("executing print statement");
                 let value = Evaluator::evaluate(print.expr.clone(), rc_locals.clone());
                 value.print();
                 (false, Value::Nil)
             }
             StmtNode::While(while_node) => {
-                println!("[debug] executing while statement");
+                Logger::debug("executing while statement");
                 // TODO: i tested this a little bit, should work, might wanna double check
                 while Evaluator::evaluate(while_node.condition.clone(), rc_locals.clone()) == Value::Bool(true) {
                     Self::execute_block(while_node.body.clone(), rc_locals.clone());
@@ -142,15 +143,15 @@ impl Executor {
                 (false, Value::Nil)
             }
             StmtNode::IfElse(if_else_node) => {
-                println!("[debug] executing if else statement");
+                Logger::debug("executing if else statement");
                 // TODO: pretty much copy-pasted from While, so it should work, but needs more testing
                 let condition = Evaluator::evaluate(if_else_node.condition.clone(), rc_locals.clone()) == Value::Bool(true);
                 if condition {
-                    println!("[debug] executing if branch");
+                    Logger::debug("executing if branch");
                     Self::execute_block(if_else_node.ifBody.clone(), rc_locals.clone());
                 }
                 if !condition && if_else_node.elseBody.is_some() {
-                    println!("[debug] executing else branch");
+                    Logger::debug("executing else branch");
                     Self::execute_block(if_else_node.elseBody.clone().unwrap(), rc_locals.clone());
                 }
 

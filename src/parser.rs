@@ -8,6 +8,7 @@
 
 use std::rc::Rc;
 use crate::lexer::Lexer;
+use crate::logger::Logger;
 use crate::tree::*;
 use crate::token::Token;
 use crate::value::Value;
@@ -196,6 +197,10 @@ impl DescentParser {
                     let print_node = self.parse_print();
                     block_node.statements.push(Rc::new(StmtNode::Print(print_node)))
                 }
+                Token::ID(_) => {
+                    let assign_node = self.parse_assign();
+                    block_node.statements.push(Rc::new(StmtNode::Assign(assign_node)))
+                }
                 _ => panic!("Unexpected token in block: '{:?}'", self.curr()),
             }
         }
@@ -314,6 +319,19 @@ impl DescentParser {
         PrintNode::new(expr_node)
     }
 
+    fn parse_assign(&mut self) -> AssignNode {
+        self.indent_print("parse_assign()");
+        self.indent_increment();
+
+        let id_node = self.expect(Token::id());
+        self.expect(Token::OP_ASSIGN);
+        let expr_node = self.parse_expr();
+        self.expect(Token::SEMICOLON);
+
+        self.indent_decrement();
+        AssignNode::new(id_node.get_id_name(), expr_node)
+    }
+
     /*
     * EBNF
     * value = <identifier> | <literal>
@@ -354,8 +372,84 @@ impl DescentParser {
             _ => panic!("Expected value but found '{:?}'", self.curr()),
         };
 
+        let is_end_of_expr = match self.curr() {
+            Token::BRACKET_L => true,
+            Token::SEMICOLON => true,
+            _ => false,
+        };
+
+        if is_end_of_expr {
+            self.indent_decrement();
+            return expr_node;
+        }
+
+        let expr_tail_node = self.parse_expr_tail(expr_node);
         self.indent_decrement();
-        expr_node
+        expr_tail_node
+    }
+
+    fn parse_expr_tail(&mut self, left_denotation: ExprNode) -> ExprNode {
+        self.indent_print("parse_expr_tail()");
+        self.indent_increment();
+        let token = self.curr();
+
+        let expr_node = match token {
+            Token::OP_ADD => {
+                self.expect(Token::OP_ADD);
+                let right_denotation = self.parse_expr();
+                ExprNode::Add(Rc::new(left_denotation), Rc::new(right_denotation))
+            }
+            Token::OP_LT => {
+                self.expect(Token::OP_LT);
+                let right_denotation = self.parse_expr();
+                ExprNode::LessThan(Rc::new(left_denotation), Rc::new(right_denotation))
+            }
+            Token::OP_GT => {
+                self.expect(Token::OP_GT);
+                let right_denotation = self.parse_expr();
+                ExprNode::GreaterThan(Rc::new(left_denotation), Rc::new(right_denotation))
+            }
+            Token::OP_EQ => {
+                self.expect(Token::OP_EQ);
+                let right_denotation = self.parse_expr();
+                ExprNode::EqualTo(Rc::new(left_denotation), Rc::new(right_denotation))
+            }
+            Token::OP_NGT => {
+                self.expect(Token::OP_NGT);
+                let right_denotation = self.parse_expr();
+                ExprNode::LessThanEq(Rc::new(left_denotation), Rc::new(right_denotation))
+            }
+            Token::OP_NLT => {
+                self.expect(Token::OP_NLT);
+                let right_denotation = self.parse_expr();
+                ExprNode::GreaterThanEq(Rc::new(left_denotation), Rc::new(right_denotation))
+            }
+            Token::OP_NEQ => {
+                self.expect(Token::OP_NEQ);
+                let right_denotation = self.parse_expr();
+                ExprNode::NotEqualTo(Rc::new(left_denotation), Rc::new(right_denotation))
+            }
+            Token::ID(_) => {
+                let id_node = self.expect(Token::id());
+                ExprNode::Call(id_node.get_id_name(), vec![])
+            }
+            _ => panic!("Expected value but found '{:?}'", self.curr()),
+        };
+
+        let is_end_of_expr = match self.curr() {
+            Token::BRACKET_L => true,
+            Token::SEMICOLON => true,
+            _ => false,
+        };
+
+        if is_end_of_expr {
+            self.indent_decrement();
+            return expr_node;
+        }
+
+        let expr_tail_node = self.parse_expr_tail(expr_node);
+        self.indent_decrement();
+        expr_tail_node
     }
 }
 
@@ -372,7 +466,7 @@ impl DescentParser {
     fn expect(&mut self, expected: Token) -> Token {
         if self.curr() == expected {
             let curr = self.curr().clone();
-            println!("{:<indent$}expect({expected:?})", "", indent = self.indent);
+            Logger::debug(&format!("{:<indent$}expect({:?})", "", curr, indent = self.indent));
             self.advance();
             curr
         } else {
@@ -382,7 +476,7 @@ impl DescentParser {
 
     fn accept(&mut self, symbol: Token) -> bool {
         if self.curr() == symbol {
-            println!("{:<indent$}accept({symbol:?})", "", indent = self.indent);
+            Logger::debug(&format!("{:<indent$}accept({:?})", "", symbol, indent = self.indent));
             self.advance();
             true
         } else {
@@ -398,7 +492,7 @@ impl DescentParser {
 // utility functions for pretty print
 impl DescentParser {
     fn indent_print(&mut self, msg: &'static str) {
-        println!("{:<indent$}{:}", "", msg, indent = self.indent);
+        Logger::debug(&format!("{:<indent$}{}", "", msg, indent = self.indent));
     }
 
     fn indent_increment(&mut self) {

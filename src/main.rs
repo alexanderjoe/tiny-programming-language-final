@@ -5,12 +5,15 @@
 use std::{error::Error, fs::read_to_string, path::PathBuf, rc::Rc};
 
 use clap::{ArgGroup, Parser};
+use clap::builder::PossibleValue;
 use tree::IfElseNode;
+use crate::logger::{Logger, LOGGER};
 
 use crate::machine::Machine;
 use crate::parser::DescentParser;
 use crate::tree::{AssignNode, BlockNode, ExprNode, FuncNode, LetNode, Parameter, PrintNode, ProgramNode, ReturnNode, StmtNode, WhileNode};
 use crate::value::Value;
+
 
 mod tree;
 mod executor;
@@ -26,6 +29,7 @@ mod lexer;
 mod parser;
 mod token;
 mod parser_pratt;
+mod logger;
 
 /*
 
@@ -141,9 +145,9 @@ fn grow_ast_program0() -> Rc<ProgramNode> {
     let stmtMain6 = StmtNode::While(WhileNode::new(
         ExprNode::LessThan(
             Rc::new(ExprNode::Var("sum".to_string())),
-            Rc::new(ExprNode::Val(Value::I32(20)))
+            Rc::new(ExprNode::Val(Value::I32(20))),
         ),
-        whileBlock
+        whileBlock,
     ));
 
     // block for if
@@ -184,7 +188,7 @@ fn grow_ast_program0() -> Rc<ProgramNode> {
     let stmtMain7 = StmtNode::IfElse(IfElseNode::new(
         ExprNode::EqualTo(
             Rc::new(ExprNode::Var("sum".to_string())),
-            Rc::new(ExprNode::Val(Value::I32(21)))
+            Rc::new(ExprNode::Val(Value::I32(21))),
         ),
         ifBlock,
         None,
@@ -234,7 +238,7 @@ fn run_main(input: String) {
     let ast = parser.analyze();
 
     // print ast
-    println!("---------------------\nProgram AST:\n {:#?}\n---------------------", ast);
+    Logger::debug(&format!("\n---------------------\nProgram AST:\n {ast:#?}\n---------------------", ast=ast));
 
     let runtime = Machine::new(Rc::new(ast));
     runtime.run();
@@ -255,7 +259,22 @@ fn main() -> Result<(), Box<dyn Error>> {
     //
     // println!("File contents:\n{}", read_to_string(args.file)?);
 
+    let log_level = match args.loglevel.as_str() {
+        "info" => logger::Level::Info,
+        "debug" => logger::Level::Debug,
+        "warn" => logger::Level::Warn,
+        "none" => logger::Level::None,
+        _ => panic!("Invalid log level: {}", args.loglevel)
+    };
+
+    *LOGGER.lock().unwrap() = Logger {
+        level: log_level,
+    };
+
+    Logger::info("Starting Tiny Programming Language");
+
     // run0();
+
     let input = read_to_string(args.file).expect("Failed to read input file.");
     run_main(input);
 
@@ -264,10 +283,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 /// Tiny Programming Language Cli
 #[derive(Debug, Parser)]
-// #[clap(group = ArgGroup::new("action").required(false).multiple(true))]
+#[command(author, version, about, long_about = None, group = ArgGroup::new("action").required(false))]
 struct Cli {
     /// File to process
     file: PathBuf,
+
+    /// Logging level
+    #[arg(short, long, default_value = "info", value_parser = vec![PossibleValue::new("info"), PossibleValue::new("debug"), PossibleValue::new("warn"), PossibleValue::new("none")], group = "action")]
+    loglevel: String,
 
     // /// Tokenize the file
     // #[clap(short = 't', long = "tokenize", group = "action")]

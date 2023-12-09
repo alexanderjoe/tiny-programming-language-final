@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use crate::logger::Logger;
 use crate::symbols::{Symbol};
 use crate::tree::{ProgramNode};
 use crate::value::Value;
@@ -15,7 +16,7 @@ impl Analyzer {
     }
 
     pub fn analyze(&self) {
-        println!("[info] Analyze.");
+        Logger::info("Analyze.");
         self.collect_symbols_program();
         self.reference_symbols_program();
     }

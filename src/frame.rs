@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use crate::logger::Logger;
 use crate::symbols::Symbols;
 use crate::tree::Parameter;
 use crate::value::Value;
@@ -59,7 +60,10 @@ impl Frame {
 
     pub fn print(& self) {
         for (name, value) in &self.values {
-            println!("    {name} = {value:?}");
+            Logger::debug(&format!("    {name} = {value:?}",
+                name = name,
+                value = value,
+            ));
         }
     }
 }

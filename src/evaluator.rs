@@ -3,6 +3,7 @@ use std::ops::Deref;
 use std::rc::Rc;
 use crate::executor::Executor;
 use crate::frame::Frame;
+use crate::logger::Logger;
 use crate::tree::ExprNode;
 use crate::value::Value;
 
@@ -29,7 +30,7 @@ impl Evaluator {
                 Self::add(value_a, value_b)
             }
             ExprNode::Call(name, rc_exprs) => {
-                println!("[debug] evaluating call '{name}'");
+                Logger::debug("evaluating call '{name}'");
                 match rc_frame.borrow().lookup_global(name) {
                     Value::Func(rc_func, argc) => {
                         assert_eq!(argc,rc_exprs.len());
@@ -41,7 +42,7 @@ impl Evaluator {
                         Executor::execute_function(rc_func, rc_frame.clone(), arguments)
                     }
                     _ => {
-                        println!("[warn] function '{name}' not found");
+                        Logger::warn("function '{name}' not found");
                         Value::Nil
                     }
                 }
@@ -100,7 +101,16 @@ impl Evaluator {
                     _ => { Value::Nil }
                 }
             }
-            Value::F32(_) => { todo!() }
+            Value::F32(a) => {
+                match value_b {
+                    Value::Nil => { Value::Nil }
+                    Value::Bool(b) => { Value::F32(a + if b {1.0} else {0.0}) }
+                    Value::I32(b) => { Value::F32(a + b as f32) }
+                    Value::F32(b) => { Value::F32(a + b) }
+                    Value::Chars(b) => { Value::Chars(format!("{}{}", a, b)) }
+                    _ => { Value::Nil }
+                }
+            }
             Value::Chars(a) => {
                 match value_b {
                     Value::Nil => { Value::Nil }

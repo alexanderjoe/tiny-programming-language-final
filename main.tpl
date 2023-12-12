@@ -1,7 +1,5 @@
 func add(a,b) [
-    let c;
-
-    return c;
+    return a + b;
 ]
 
 func main(argc) [
@@ -11,6 +9,8 @@ func main(argc) [
         x = x + 1;
         print "so true: " + x;
     ]
+    x = add(x, 1500);
+    print "x just got 1500 new friends x: " + x;
 
     let z;
 

@@ -35,11 +35,21 @@ impl DescentParser {
 
         let mut program = ProgramNode::new();
 
-        // todo: parse content outside of functions (peek and see if it's a func keyword)
-        // repeatedly parse functions until EOI
+        // parse lexer output until we reach the EOI token
         while !self.peek(Token::EOI) {
-            let func_node = self.parse_func();
-            program.func_nodes.push(Rc::new(func_node));
+            match self.curr() {
+                Token::KW_FUNC => {
+                    let func_node = self.parse_func();
+                    program.func_nodes.push(Rc::new(func_node));
+                }
+                Token::KW_LET => {
+                    let let_node = self.parse_let();
+                    program.let_nodes.push(Rc::new(let_node));
+                }
+                _ => {
+                    panic!("Unexpected token `{}` while parsing program.", self.curr())
+                }
+            }
         }
 
         self.expect(Token::EOI);
@@ -347,7 +357,11 @@ impl DescentParser {
         let expr_node = match token {
             Token::ID(_) => {
                 let id_node = self.expect(Token::id());
-                ExprNode::Var(id_node.get_id_name())
+                if self.peek(Token::PARENS_L) {
+                    self.parse_func_call(id_node.get_id_name())
+                } else {
+                    ExprNode::Var(id_node.get_id_name())
+                }
             }
             Token::LIT_INT32(_) => {
                 let lit_node = self.expect(Token::lit_i32());
@@ -375,6 +389,8 @@ impl DescentParser {
         let is_end_of_expr = match self.curr() {
             Token::BRACKET_L => true,
             Token::SEMICOLON => true,
+            Token::COMMA => true,
+            Token::PARENS_R => true,
             _ => false,
         };
 
@@ -398,6 +414,16 @@ impl DescentParser {
                 self.expect(Token::OP_ADD);
                 let right_denotation = self.parse_expr();
                 ExprNode::Add(Rc::new(left_denotation), Rc::new(right_denotation))
+            }
+            Token::OP_MUL => {
+                self.expect(Token::OP_MUL);
+                let right_denotation = self.parse_expr();
+                ExprNode::Mul(Rc::new(left_denotation), Rc::new(right_denotation))
+            }
+            Token::OP_SUB => {
+                self.expect(Token::OP_SUB);
+                let right_denotation = self.parse_expr();
+                ExprNode::Sub(Rc::new(left_denotation), Rc::new(right_denotation))
             }
             Token::OP_LT => {
                 self.expect(Token::OP_LT);
@@ -439,6 +465,8 @@ impl DescentParser {
         let is_end_of_expr = match self.curr() {
             Token::BRACKET_L => true,
             Token::SEMICOLON => true,
+            Token::COMMA => true,
+            Token::PARENS_R => true,
             _ => false,
         };
 
@@ -450,6 +478,20 @@ impl DescentParser {
         let expr_tail_node = self.parse_expr_tail(expr_node);
         self.indent_decrement();
         expr_tail_node
+    }
+
+    fn parse_func_call(&mut self, func_name: String) -> ExprNode {
+        self.expect(Token::PARENS_L);
+        let mut args = vec![];
+        while !self.peek(Token::PARENS_R) {
+            let arg = self.parse_expr();
+            args.push(Rc::new(arg));
+            if !self.accept(Token::COMMA) {
+                break;
+            }
+        }
+        self.expect(Token::PARENS_R);
+        ExprNode::Call(func_name, args)
     }
 }
 

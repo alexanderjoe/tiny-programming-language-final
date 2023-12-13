@@ -246,8 +246,8 @@ fn run_main(input: String) {
 
 
 fn main() -> Result<(), Box<dyn Error>> {
-    // TODO: uncomment when ready to add cli support
     let args = Cli::parse();
+    // TODO: uncomment when ready to add cli support
     //
     // if args.tokenize {
     //     println!("Tokenizing file: {:?}", args.file);
@@ -271,7 +271,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         level: log_level,
     };
 
-    Logger::info("Starting Tiny Programming Language");
+    Logger::info("Starting Iron Oxide...");
 
     // run0();
 
@@ -281,7 +281,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-/// Tiny Programming Language Cli
+/// Iron Oxide Cli
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about = None, group = ArgGroup::new("action").required(false))]
 struct Cli {

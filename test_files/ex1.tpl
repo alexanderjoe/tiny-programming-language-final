@@ -1,3 +1,5 @@
+let k;
+
 func factorial_recursion(n)
 [
     if n < 2 [

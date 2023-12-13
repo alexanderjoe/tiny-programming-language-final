@@ -1,4 +1,5 @@
 use std::sync::Mutex;
+
 use lazy_static::lazy_static;
 
 pub enum Level {
@@ -20,18 +21,16 @@ impl Logger {
                 if let Level::Info | Level::Debug | Level::Warn = logger.level {
                     println!("[INFO] {}", message);
                 }
-            },
+            }
             Level::Debug => {
                 if let Level::Debug | Level::Warn = logger.level {
                     println!("[DEBUG] {}", message);
                 }
-            },
+            }
             Level::Warn => {
-                if let Level::Warn = logger.level {
-                    println!("[WARN] {}", message);
-                }
-            },
-            Level::None => {},
+                println!("[WARN] {}", message);
+            }
+            Level::None => {}
         }
     }
 

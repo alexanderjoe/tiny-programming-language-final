@@ -53,7 +53,7 @@ impl Executor {
 
         // execute main function
         // todo: could probably actually accept arguments here to pass to main
-        let arguments = vec![Value::I32(1)];
+        let arguments = vec![];
         Self::execute_function(rc_main, rc_global, arguments);
 
         Logger::info("Program finished.");

@@ -8,7 +8,7 @@ func spacer() [
     print "";
 ]
 
-func main(argc) [
+func main() [
     let s;
     let x;
     x = 5 + 4 + 2;

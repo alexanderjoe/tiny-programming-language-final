@@ -455,10 +455,6 @@ impl DescentParser {
                 let right_denotation = self.parse_expr();
                 ExprNode::NotEqualTo(Rc::new(left_denotation), Rc::new(right_denotation))
             }
-            Token::ID(_) => {
-                let id_node = self.expect(Token::id());
-                ExprNode::Call(id_node.get_id_name(), vec![])
-            }
             _ => panic!("Expected value but found '{:?}'", self.curr()),
         };
 

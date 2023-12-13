@@ -3,10 +3,11 @@
 #![allow(dead_code)]
 
 use std::rc::Rc;
+
 use crate::lexer::Lexer;
 use crate::logger::Logger;
-use crate::tree::*;
 use crate::token::Token;
+use crate::tree::*;
 use crate::value::Value;
 
 const INDENT: usize = 2;
@@ -16,7 +17,6 @@ pub struct DescentParser {
     indent: usize,
 }
 
-// simple recursive descend parser
 impl DescentParser {
     pub fn new(lexer: Lexer) -> DescentParser {
         DescentParser {
@@ -345,6 +345,7 @@ impl DescentParser {
     * literal = LIT_INT32(i32) | LIT_FLT32(f32) | LIT_CHAR(char) | LIT_STRING(String) | LIT_BOOL(bool)
     */
     //todo: this is very basic, just a temp as we have no pratt parser
+
     fn parse_expr(&mut self) -> ExprNode {
         self.indent_print("parse_expr()");
         self.indent_increment();

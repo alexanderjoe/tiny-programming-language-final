@@ -1,10 +1,19 @@
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
+
 use crate::evaluator::Evaluator;
 use crate::frame::Frame;
+use crate::logger::Logger;
 use crate::tree::{BlockNode, FuncNode, ProgramNode, StmtNode};
 use crate::value::Value;
+
+enum Control {
+    Next,
+    Return,
+    Break,
+    Continue,
+}
 
 pub struct Executor {
     program: Rc<ProgramNode>,
@@ -16,12 +25,12 @@ impl Executor {
     }
 
     pub fn execute(&self) {
-        println!("[info] Execute.");
+        Logger::info("Execute.");
         self.execute_program();
     }
 
     fn execute_program(&self) {
-        println!("[info] Execute Program.");
+        Logger::info("Execute Program.");
 
         // get program node symbol table
         let rc_symbols = self.program.symbols.clone();
@@ -43,21 +52,19 @@ impl Executor {
         let rc_global = Rc::new(RefCell::new(global));
 
         // execute main function
+        // todo: could probably actually accept arguments here to pass to main
         let arguments = vec![Value::I32(1)];
         Self::execute_function(rc_main, rc_global, arguments);
+
+        Logger::info("Program finished.");
     }
 
-    pub fn execute_function(
-        rc_func: Rc<FuncNode>,
-        frame: Rc<RefCell<Frame>>,
-        arguments: Vec<Value>,
-    ) -> Value
-    {
+    pub fn execute_function(rc_func: Rc<FuncNode>, globals: Rc<RefCell<Frame>>, arguments: Vec<Value>) -> Value {
         let name = &rc_func.name;
-        println!("[debug] calling function '{name}'.");
+        Logger::debug(&format!("calling function '{name}'.", name = name));
 
         // create local stack frame
-        let mut locals = Frame::new(Some(frame));
+        let mut locals = Frame::new(Some(globals));
 
         // initialize parameters
         let name = &rc_func.name;
@@ -72,89 +79,80 @@ impl Executor {
         // execute function block
         let rc_block = rc_func.block_node.clone();
         let rc_locals = Rc::new(RefCell::new(locals));
-        let return_value = Self::execute_block(rc_block, rc_locals);
+        let (_, value) = Self::execute_block_without_scope(rc_block, rc_locals);
 
-        return_value
+        value
     }
 
-    fn execute_block(
-        rc_block: Rc<BlockNode>,
-        rc_locals: Rc<RefCell<Frame>>,
-    ) -> Value {
-        // get block node symbol table
-        let rc_symbols = rc_block.symbols.clone();
-        let symbols = rc_symbols.borrow();
-
-        // initialize local frame
-        rc_locals.borrow_mut().init_symbols(&symbols);
-
-        println!("[debug] Block Symbols:");
-        rc_locals.borrow_mut().print();
-
+    fn execute_block_without_scope(rc_block: Rc<BlockNode>, rc_locals: Rc<RefCell<Frame>>) -> (Control, Value) {
         // execute statements
         for statement in &rc_block.statements {
-            let (done, value) = Self::execute_statement(
+            let (control, value) = Self::execute_statement(
                 statement.clone(),
                 rc_locals.clone(),
             );
-            if done {
-                return value;
+            match control {
+                Control::Next => {}
+                Control::Return => { return (Control::Return, value); }
+                Control::Break => {}
+                Control::Continue => {}
             }
         }
 
-        Value::Nil
+        (Control::Next, Value::Nil)
     }
 
     fn execute_statement(
         rc_statement: Rc<StmtNode>,
         rc_locals: Rc<RefCell<Frame>>,
-    ) -> (bool, Value)
+    ) -> (Control, Value)
     {
         match rc_statement.deref() {
             StmtNode::Let(_) => {
-                println!("[debug] ignoring let statement");
-                (false, Value::Nil)
+                Logger::debug("ignoring let statement");
+                (Control::Next, Value::Nil)
             }
             StmtNode::Assign(assign) => {
-                println!("[debug] executing assign statement");
+                Logger::debug("executing assign statement");
                 let name = &assign.name;
                 let value = Evaluator::evaluate(assign.expr.clone(), rc_locals.clone());
                 rc_locals.borrow_mut().assign(name, value);
-                (false, Value::Nil)
+                (Control::Next, Value::Nil)
             }
             StmtNode::Return(ret) => {
-                println!("[debug] executing return statement");
+                Logger::debug("executing return statement");
                 let value = Evaluator::evaluate(ret.expr.clone(), rc_locals.clone());
-                (true, value)
+                (Control::Return, value)
             }
             StmtNode::Print(print) => {
-                println!("[debug] executing print statement");
+                Logger::debug("executing print statement");
                 let value = Evaluator::evaluate(print.expr.clone(), rc_locals.clone());
                 value.print();
-                (false, Value::Nil)
+                (Control::Next, Value::Nil)
             }
             StmtNode::While(while_node) => {
-                println!("[debug] executing while statement");
-                // TODO: i tested this a little bit, should work, might wanna double check
+                Logger::debug("executing while statement");
                 while Evaluator::evaluate(while_node.condition.clone(), rc_locals.clone()) == Value::Bool(true) {
-                    Self::execute_block(while_node.body.clone(), rc_locals.clone());
+                    Self::execute_block_without_scope(while_node.body.clone(), rc_locals.clone());
                 }
-                (false, Value::Nil)
+                (Control::Next, Value::Nil)
             }
             StmtNode::IfElse(if_else_node) => {
-                println!("[debug] executing if else statement");
-                // TODO: pretty much copy-pasted from While, so it should work, but needs more testing
-                let condition = Evaluator::evaluate(if_else_node.condition.clone(), rc_locals.clone()) == Value::Bool(true);
-                if condition {
-                    println!("[debug] executing if branch");
-                    Self::execute_block(if_else_node.ifBody.clone(), rc_locals.clone());
+                Logger::debug("executing if else statement");
+                let condition = Evaluator::evaluate(if_else_node.condition.clone(), rc_locals.clone());
+                if let Value::Bool(b) = condition {
+                    if b {
+                        Logger::debug("executing if body");
+                        return Self::execute_block_without_scope(if_else_node.ifBody.clone(), rc_locals.clone());
+                    }
+                    if !b && if_else_node.elseBody.is_some() {
+                        Logger::debug("executing else body");
+                        return Self::execute_block_without_scope(if_else_node.elseBody.clone().unwrap(), rc_locals.clone());
+                    }
+                    (Control::Next, Value::Nil)
+                } else {
+                    panic!("If-then-else statement condition must be of type boolean!");
                 }
-                if !condition && if_else_node.elseBody.is_some() {
-                    println!("[debug] executing else branch");
-                    Self::execute_block(if_else_node.elseBody.clone().unwrap(), rc_locals.clone());
-                }
-
-                (false, Value::Nil)
             }
         }
     }

@@ -14,7 +14,14 @@ pub enum Value {
 
 impl Value {
     pub fn print(&self) {
-        println!("{self:?}");
+        match self {
+            Value::Nil => { println!("nil") }
+            Value::Bool(b) => { println!("{}", b) }
+            Value::I32(i) => { println!("{}", i) }
+            Value::F32(f) => { println!("{}", f) }
+            Value::Chars(s) => { println!("{}", s) }
+            Value::Func(func, num_params) => { println!("<func {} {}>", func.name, num_params) }
+        }
     }
 }
 

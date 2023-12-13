@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+
 use crate::symbols::Symbols;
 use crate::value::Value;
 
@@ -177,6 +178,8 @@ pub enum ExprNode {
     Val(Value),
     String(String),
     Add(Rc<ExprNode>, Rc<ExprNode>),
+    Sub(Rc<ExprNode>, Rc<ExprNode>),
+    Mul(Rc<ExprNode>, Rc<ExprNode>),
     Call(String, Vec<Rc<ExprNode>>),
     LessThan(Rc<ExprNode>, Rc<ExprNode>),
     GreaterThan(Rc<ExprNode>, Rc<ExprNode>),

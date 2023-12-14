@@ -4,6 +4,10 @@ func not_main()[
 ]
 func main() [
     let z;
-    z=5;
-    print x;
+    z=8;
+    [
+        z=5;
+        print z;
+    ]
+    print z;
 ]

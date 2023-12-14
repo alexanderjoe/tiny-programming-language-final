@@ -179,10 +179,10 @@ impl DescentParser {
         self.expect(Token::BRACKET_L);
         while !self.peek(Token::BRACKET_R) {
             match self.curr() {
-                // Token::BRACKET_L => {
-                //     let nested_block = self.parse_block_nest();
-                //     block_node.statements.push(Rc::new(StmtNode::Block(nested_block))); todo: there is no StmtNode::Block
-                // }
+                Token::BRACKET_L => {
+                    let nested_block = self.parse_block_nest();
+                    block_node.statements.push(Rc::new(StmtNode::Block(nested_block.into()))); //todo: there is no StmtNode::Block
+                }
                 Token::KW_LET => {
                     let let_node = self.parse_let();
                     block_node.statements.push(Rc::new(StmtNode::Let(let_node)));

@@ -1,3 +1,4 @@
+use std::alloc::System;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -45,6 +46,9 @@ impl Frame {
     }
 
     pub fn assign(&mut self, name: &String, value: Value) {
+        // if self.lookup(name)!=Value::Nil{
+        //     print!("YIPPEE");
+        // }
         self.values.insert(name.clone(), value);
     }
 
@@ -69,6 +73,7 @@ impl Frame {
     }
 
     pub fn lookup_parent(&self, name: &String) -> Value {
+        // print!("LOOKING UP PARENT");
         match &self.parent{
             None => { Value::Nil }
             Some(parent) => {

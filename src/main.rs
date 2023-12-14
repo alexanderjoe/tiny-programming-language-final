@@ -276,6 +276,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // run0();
 
     let input = read_to_string(args.file).expect("Failed to read input file.");
+    // let input = read_to_string("test_files/out_of_scope.fe").expect("Failed to read input file.");
     run_main(input);
 
     Ok(())

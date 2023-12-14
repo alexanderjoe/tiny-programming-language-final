@@ -64,7 +64,7 @@ impl Executor {
         Logger::debug(&format!("calling function '{name}'.", name = name));
 
         // create local stack frame
-        let mut locals = Frame::new(Some(globals), None);
+        let mut locals = Frame::new(Some(globals.clone()), None);
 
         // initialize parameters
         let name = &rc_func.name;
@@ -79,17 +79,19 @@ impl Executor {
         // execute function block
         let rc_block = rc_func.block_node.clone();
         let rc_locals = Rc::new(RefCell::new(locals));
-        let (_, value) = Self::execute_block_without_scope(rc_block, rc_locals);
+        let (_, value) = Self::execute_block_with_scope(rc_block, rc_locals, globals.clone());
 
         value
     }
 
-    fn execute_block_without_scope(rc_block: Rc<BlockNode>, rc_locals: Rc<RefCell<Frame>>) -> (Control, Value) {
+    fn execute_block_with_scope(rc_block: Rc<BlockNode>, parent: Rc<RefCell<Frame>>, globals: Rc<RefCell<Frame>>) -> (Control, Value) {
+        let rc_locals=Rc::new(RefCell::new(Frame::new(Some(globals.clone()), Some(parent))));
         // execute statements
         for statement in &rc_block.statements {
             let (control, value) = Self::execute_statement(
                 statement.clone(),
                 rc_locals.clone(),
+                globals.clone(),
             );
             match control {
                 Control::Next => {}
@@ -105,6 +107,7 @@ impl Executor {
     fn execute_statement(
         rc_statement: Rc<StmtNode>,
         rc_locals: Rc<RefCell<Frame>>,
+        globals: Rc<RefCell<Frame>>,
     ) -> (Control, Value)
     {
         match rc_statement.deref() {
@@ -133,7 +136,7 @@ impl Executor {
             StmtNode::While(while_node) => {
                 Logger::debug("executing while statement");
                 while Evaluator::evaluate(while_node.condition.clone(), rc_locals.clone()) == Value::Bool(true) {
-                    Self::execute_block_without_scope(while_node.body.clone(), rc_locals.clone());
+                    Self::execute_block_with_scope(while_node.body.clone(), rc_locals.clone(), globals.clone());
                 }
                 (Control::Next, Value::Nil)
             }
@@ -143,16 +146,19 @@ impl Executor {
                 if let Value::Bool(b) = condition {
                     if b {
                         Logger::debug("executing if body");
-                        return Self::execute_block_without_scope(if_else_node.ifBody.clone(), rc_locals.clone());
+                        return Self::execute_block_with_scope(if_else_node.ifBody.clone(), rc_locals.clone(), globals.clone());
                     }
                     if !b && if_else_node.elseBody.is_some() {
                         Logger::debug("executing else body");
-                        return Self::execute_block_without_scope(if_else_node.elseBody.clone().unwrap(), rc_locals.clone());
+                        return Self::execute_block_with_scope(if_else_node.elseBody.clone().unwrap(), rc_locals.clone(), globals.clone());
                     }
                     (Control::Next, Value::Nil)
                 } else {
                     panic!("If-then-else statement condition must be of type boolean!");
                 }
+            }
+            StmtNode::Block(block_node) => {
+                Self::execute_block_with_scope(block_node.clone(), rc_locals.clone(), globals.clone())
             }
         }
     }

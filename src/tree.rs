@@ -78,6 +78,7 @@ pub enum StmtNode {
     Print(PrintNode),
     While(WhileNode),
     IfElse(IfElseNode),
+    Block(Rc<BlockNode>),
 }
 
 

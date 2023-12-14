@@ -47,7 +47,7 @@ impl Executor {
         };
 
         // create global stack frame
-        let mut global = Frame::new(None);
+        let mut global = Frame::new(None, None);
         global.init_symbols(symbols.deref());
         let rc_global = Rc::new(RefCell::new(global));
 
@@ -64,7 +64,7 @@ impl Executor {
         Logger::debug(&format!("calling function '{name}'.", name = name));
 
         // create local stack frame
-        let mut locals = Frame::new(Some(globals));
+        let mut locals = Frame::new(Some(globals), None);
 
         // initialize parameters
         let name = &rc_func.name;

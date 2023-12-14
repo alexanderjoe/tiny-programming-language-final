@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use crate::tree::{FuncNode};
+use crate::tree::FuncNode;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone)]

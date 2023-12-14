@@ -13,7 +13,7 @@ func factorial_loop(n)
 [
     let p;
     p = n;
-    while n > 0 [
+    while n > 1 [
         n = n - 1;
         p = p * n;
     ]

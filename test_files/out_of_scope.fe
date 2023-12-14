@@ -1,0 +1,9 @@
+func not_main()[
+    let x;
+    x=3;
+]
+func main() [
+    let z;
+    z=5;
+    print x;
+]

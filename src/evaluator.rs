@@ -32,7 +32,10 @@ impl Evaluator {
     pub fn evaluate(expr: Rc<ExprNode>, rc_frame: Rc<RefCell<Frame>>) -> Value {
         match expr.deref() {
             ExprNode::Var(name) => {
-                rc_frame.borrow().lookup(name)
+                match rc_frame.borrow().lookup(name){
+                    Value::Nil => {panic!("Can't find variable '{name}'!");}
+                    other=>{other}
+                }
             }
             ExprNode::Val(value) => {
                 value.clone()
@@ -62,7 +65,7 @@ impl Evaluator {
             // }
             ExprNode::Call(name, rc_exprs) => {
                 Logger::debug(&format!("evaluating call '{name}'", name = name));
-                match rc_frame.borrow().lookup_global(name) {
+                match rc_frame.borrow().lookup(name) {
                     Value::Func(rc_func, argc) => {
                         assert_eq!(argc, rc_exprs.len());
 

@@ -10,13 +10,15 @@ use crate::value::Value;
 pub struct Frame {
     globals: Option<Rc<RefCell<Frame>>>,
     values: HashMap<String, Value>,
+    parent: Option<Rc<RefCell<Frame>>>,
 }
 
 impl Frame {
-    pub fn new(global: Option<Rc<RefCell<Frame>>>) -> Frame {
+    pub fn new(global: Option<Rc<RefCell<Frame>>>, parent:Option<Rc<RefCell<Frame>>>) -> Frame {
         Frame {
             globals: global,
             values: HashMap::new(),
+            parent: parent,
         }
     }
 
@@ -48,7 +50,11 @@ impl Frame {
 
     pub fn lookup(&self, name: &String) -> Value {
         match self.values.get(name) {
-            None => { Value::Nil }
+            None => { if self.parent.is_some(){
+                self.lookup_parent(name)
+            } else{
+                self.lookup_global(name)
+            } }
             Some(value) => { value.clone() }
         }
     }
@@ -58,6 +64,15 @@ impl Frame {
             None => { Value::Nil }
             Some(rc_globals) => {
                 rc_globals.borrow().lookup(name)
+            }
+        }
+    }
+
+    pub fn lookup_parent(&self, name: &String) -> Value {
+        match &self.parent{
+            None => { Value::Nil }
+            Some(parent) => {
+                parent.borrow().lookup(name)
             }
         }
     }

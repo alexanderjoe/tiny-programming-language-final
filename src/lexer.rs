@@ -1,7 +1,3 @@
-// Author: Alexander Diaz
-// Class: CS 1720
-// Assignment: Recursive Descent Parser
-
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 #![allow(dead_code)]

@@ -1,4 +1,4 @@
-# CS 1720 Final Project
+# CS 1720 Final Project (Iron Oxide)
 A Tiny Programming Language
 
 ## Contributors
